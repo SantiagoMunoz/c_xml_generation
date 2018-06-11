@@ -16,12 +16,12 @@ tree= etree.parse('%s/op_sections.xml' % config_prefix)
 m_root = tree.getroot()
 m_opname = m_root.tag
 
-op_dynamic_c = env.get_template('%s/base.c' % template_prefix)
+op_dynamic_c = env.get_template('%s/base.ji2.c' % template_prefix)
 output = op_dynamic_c.render(opname=m_opname,root=m_root)
 filename = '%s/op_dynamic.c' % (output_prefix)
 f = open(filename, 'w')
 f.write(output)
-op_dynamic = env.get_template('%s/base.h' % template_prefix)
+op_dynamic = env.get_template('%s/base.ji2.h' % template_prefix)
 output = op_dynamic.render(opname=m_opname,root=m_root)
 filename = '%s/op_dynamic.h' % output_prefix
 f = open(filename, 'w')
