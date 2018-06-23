@@ -1,0 +1,36 @@
+{% set child_name = child.attrib['name'] %}
+{% set child_type = child.attrib['type'] %}
+{% set child_dataType = child.attrib['dataType'] %}
+{% set parent_name = parent.attrib['name'] %}
+
+/* {{child_name}} management */
+typedef struct {{child_name}}_t* {{child_name}}Ptr_t;
+{{child_name}}Ptr_t {{child_name}}_new();
+void {{child_name}}_free({{child_name}}Ptr_t target);
+void {{child_name}}_reset({{child_name}}Ptr_t target);
+{% if not ('root' in child_type) %}
+{% if child_type in ['csv','multiple'] %}
+int {{parent_name}}_append_{{child_name}}({{parent_name}}Ptr_t var, {{child_name}}Ptr_t value);
+{% else %}
+void {{parent_name}}_set_{{child_name}}({{parent_name}}Ptr_t var, {{child_name}}Ptr_t value);
+{% endif %}
+{% else %}
+void {{parent_name}}_build_xml({{parent_name}}Ptr_t var, xmlNodePtr parent);
+{% endif %}
+
+{% for element in child %}
+{% set element_name = element.attrib['name'] %}
+{% set element_type = element.attrib['type'] %}
+{% set element_dataType = element.attrib['dataType'] %}
+{% if element.tag == 'param' %}
+{% if element_type in ['csv','multiple'] %}    
+int {{child_name}}_append_{{element.text}}({{child_name}}Ptr_t var, {{element_dataType}} *value);
+{% else %}
+int {{child_name}}_set_{{element.text}}({{child_name}}Ptr_t var, {{element_dataType}} *value);
+{% endif %}
+{% else %}
+{% set parent = child %}
+{% set child = element %}
+{% include 'templates/struct_function_dec_.ji2' %}
+{% endif %}
+{% endfor %}

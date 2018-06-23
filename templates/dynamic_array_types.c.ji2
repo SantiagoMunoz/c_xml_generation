@@ -1,0 +1,8 @@
+typedef struct {{arrayElem_name}}_dynArray_t{
+{% if 'length' in element.attrib.keys() %}
+    {{arrayElem_dataType}} data[{{element.attrib['length']}}];
+{% else %} 
+    {{arrayElem_dataType}} data;
+{% endif %}
+    struct {{arrayElem_name}}_dynArray_t* next;
+} {{arrayElem_name}}_dynArray_t;

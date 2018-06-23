@@ -1,0 +1,151 @@
+{% for element in child %}
+{% set element_name = element.attrib['name'] %}
+{% set element_type = element.attrib['type'] %}
+{% set element_dataType = element.attrib['dataType'] %}
+{% if element.tag == 'struct' %}
+{% set parent = child %}
+{% set child = element %}
+{% include 'templates/struct_function_impl_.ji2' %}
+{% endif %}
+{% endfor %}
+
+{% set child_name = child.attrib['name'] %}
+{% set child_type = child.attrib['type'] %}
+{% set parent_name = parent.attrib['name'] %} 
+/* {{child_name}} dependencies */
+{% for element in child %}
+{% set element_name = element.attrib['name'] %}
+{% set element_type = element.attrib['type'] %}
+{% set element_dataType = element.attrib['dataType'] %}
+{% if element.tag == 'param' %}
+{% if element_type in ['csv'] %}    
+{% set arrayElem_name = element.text %}
+{% set arrayElem_dataType = element_dataType %}
+{% set arrayElem_type = element_type %}
+{% set arrayElem_tag = element.tag %}
+{% set parent_name = child_name %}
+{% include 'templates/dynamic_array.c.ji2'  %}
+{% endif %}
+{% else %}
+{% if element.tag == 'struct' %}
+{% if 'type' in element.attrib.keys()  %}
+{% if element.attrib['type'] == 'multiple' %}
+{% set arrayElem = element %}
+{% set arrayElem_name = element.attrib['name'] %}
+{% set arrayElem_dataType_t = ['struct ', arrayElem_name,'_t'] %}
+{% set arrayElem_dataType = arrayElem_dataType_t|join('') %}
+{% set arrayElem_type = element.attrib['type'] %}
+{% set arrayElem_tag = element.tag %}
+{% set parent_name = child_name %}
+{% set arrayElem_type = element_type %}
+{% include 'templates/dynamic_array.c.ji2' %}
+{% endif %}
+{% endif %}
+{% endif %}
+{% endif %}
+{% endfor %}
+/* --- */
+
+/* {{child_name}} type API */
+{{child_name}}Ptr_t {{child_name}}_new()
+{
+    {{child_name}}Ptr_t tmp = ({{child_name}}Ptr_t)malloc(sizeof(struct {{child_name}}_t));
+    memset(tmp, 0x00, sizeof(struct {{child_name}}_t));
+    return tmp;
+}
+void {{child_name}}_free({{child_name}}Ptr_t target)
+{
+    if(target == NULL)  return;
+{% for element in child %}
+{% set element_type = element.attrib['type'] %}
+{% set element_dataType = element.attrib['dataType'] %}
+{% if (element.tag == 'param') and (element_type in ['csv']) %}
+{% set element_name = element.text %}
+    free_{{element_name}}_array(target->{{element_name}});
+{% elif (element.tag == 'struct') %}
+{% set element_name = element.attrib['name'] %}
+{% if not ('type' in element.attrib.keys()) %}
+    {{element_name}}_free(target->{{element_name}});
+{% elif element.attrib['type'] == 'multiple' %}
+    free_{{element_name}}_array(target->{{element_name}});
+{% else %}
+    {{element_name}}_free(target->{{element_name}});
+{% endif %}
+{% endif %}
+{% endfor %}
+    free(target);
+}
+void {{child_name}}_reset({{child_name}}Ptr_t target)
+{
+{% for element in child %}
+{% set element_type = element.attrib['type'] %}
+{% set element_dataType = element.attrib['dataType'] %}
+{% if (element.tag == 'param') and (element_type in ['csv']) %}
+{% set element_name = element.text %}
+    free_{{element_name}}_array(target->{{element_name}});
+{% elif (element.tag == 'struct') %}
+{% set element_name = element.attrib['name'] %}
+{% if not ('type' in element.attrib.keys()) %}
+    {{element_name}}_free(target->{{element_name}});
+{% elif element.attrib['type'] == 'multiple' %}
+    free_{{element_name}}_array(target->{{element_name}});
+{% else %}
+    {{element_name}}_free(target->{{element_name}});
+{% endif %}{% endif %}
+{% endfor %}
+    memset(target, 0x00, sizeof(struct {{child_name}}_t));
+}
+
+{% if not (child_type in ['csv','multiple','root']) %}
+void {{parent_name}}_set_{{child_name}}({{parent_name}}Ptr_t var, {{child_name}}Ptr_t value)
+{
+    //Single-type element
+    var->{{child_name}} = value;
+    return;
+}
+{% endif %}
+{% if not (child_type in ['multiple','csv']) %}
+void {{child_name}}_build_xml({{child_name}}Ptr_t var, xmlNodePtr parent)
+{
+    if(var == NULL) return; //If the struct is not set... dont even bother
+    xmlNodePtr newNode = xmlNewNode(NULL,"{{child_name}}");
+    xmlNodePtr elementNode;
+{% for element in child %}
+{% if element.tag == 'struct' %}
+    {{element.attrib['name']}}_build_xml(var->{{element.attrib['name']}}, newNode);
+{% elif (element.tag == 'param') and not ('type' in element.attrib.keys())  %}
+{% set element_dataType = element.attrib['dataType'] %}
+{% set element_name =  element.text %}
+{% set element_variable = "".join(['var->', element_name]) %}
+{% set xml_operation = 'Set' %}
+    elementNode = xmlNewNode(NULL,"{{element_name}}");
+{% set xml_node = 'elementNode' %}
+{% include 'templates/parameter_serialization_single.c.ji2' %}
+    xmlAddChild(newNode,elementNode);
+{% elif (element.tag == 'param') and (element.attrib['type'] in ['csv','multiple'])  %}
+    {{element.text}}_array_build_xml(var->{{element.text}},newNode);
+{% endif %}
+{% endfor %}
+    xmlAddChild(parent, newNode);
+}
+{% endif %}
+//Remaining setter methods
+{% for element in child %}
+{% set element_name = element.attrib['name'] %}
+{% set element_type = element.attrib['type'] %}
+{% set element_dataType = element.attrib['dataType'] %}
+{% if element.tag == 'param' %}
+{% if not(element_type in ['csv','multiple']) %}
+int {{child_name}}_set_{{element.text}}({{child_name}}Ptr_t var, {{element_dataType}} *value)
+{
+{% if  not('length' in element.attrib.keys()) %}
+    var->{{element.text}} = *value;
+{% else %}
+    memcpy(var->{{element.text}}, value, {{element.attrib['length']}}*sizeof({{element_dataType}}));
+{% endif %}
+    return 0;
+}
+{% endif %}
+{% endif %}
+{% endfor %}
+/* --- */

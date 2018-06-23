@@ -1,0 +1,110 @@
+int {{parent_name}}_append_{{arrayElem_name}}({{parent_name}}Ptr_t var,{{arrayElem_dataType}} *value)
+{
+    int no_items = 0;
+    {{arrayElem_name}}_dynArray_t* target_node = var->{{arrayElem_name}};
+    if(target_node != NULL){
+        while(target_node->next != NULL){
+            target_node = target_node->next;
+            no_items++;
+        }
+        target_node->next = ({{arrayElem_name}}_dynArray_t*)malloc(sizeof({{arrayElem_name}}_dynArray_t));
+        target_node = target_node->next;
+    }else{
+        var->{{arrayElem_name}} = ({{arrayElem_name}}_dynArray_t*)malloc(sizeof({{arrayElem_name}}_dynArray_t));
+        target_node = var->{{arrayElem_name}};
+    }
+    target_node->next = NULL;
+{% if arrayElem_tag == 'struct' %}
+    target_node->data = value;
+{% elif arrayElem_tag == 'param' %}
+{% if 'length' in element.attrib.keys() %}
+    memcpy(target_node->data, value, {{element.attrib['length']}}*sizeof({{arrayElem_dataType}}));
+{% else %}
+    target_node->data = *value;
+{% endif %}
+{% endif %}
+    return no_items+1;
+}
+
+void free_{{arrayElem_name}}_array({{arrayElem_name}}_dynArray_t *firstElement)
+{
+    if(firstElement == NULL)    return;
+    if(firstElement->next != NULL)
+        free_{{arrayElem_name}}_array(firstElement->next);
+{% if arrayElem_tag == 'struct' %}
+    {{arrayElem_name}}_free(firstElement->data);
+{% endif %}
+    free(firstElement);
+    return;
+}
+{%if arrayElem_tag == 'struct' %}
+void {{arrayElem_name}}_build_xml({{arrayElem_name}}_dynArray_t *firstElement,xmlNodePtr parent)
+{
+    {{arrayElem_name}}_dynArray_t *target = firstElement;
+    while(target != NULL){
+        xmlNodePtr newNode = xmlNewNode(NULL,"{{arrayElem_name}}");
+        xmlNodePtr elementNode;
+{% for node in element  %}
+{% if node.tag == 'struct' %}
+        {{node.attrib['name']}}_build_xml(target->data->{{node.attrib['name']}}, newNode);
+{% elif (node.tag == 'param') and not ('type' in node.attrib.keys()) %}
+        //single parameters {{node.text}}    
+        elementNode = xmlNewNode(NULL,"{{node.text}}");
+{% set element = node %}
+{% set element_dataType = node.attrib['dataType'] %}
+{% set element_name = node.text %}
+{% set element_variable = 'target->data->' + element_name %}
+{% set xml_operation = 'Set' %}
+{% set xml_node = 'elementNode' %}
+{% include 'templates/parameter_serialization_single.c.ji2' %}
+        xmlAddChild(newNode, elementNode);
+{% elif (node.tag == 'param') and (node.attrib['type'] in ['csv','multiple'])  %}
+        {{node.text}}_array_build_xml(target->data->{{node.text}},newNode);
+{% endif %}
+{% endfor %}
+        target = target->next;
+        xmlAddChild(parent, newNode);
+    }
+}
+{% elif arrayElem_tag == 'param' %}
+void {{arrayElem_name}}_array_build_xml({{arrayElem_name}}_dynArray_t *firstElement,xmlNodePtr parent)
+{
+    {{arrayElem_name}}_dynArray_t *target = firstElement;
+
+{% if element_type == 'csv' %}
+    xmlNodePtr newNode = xmlNewNode(NULL, "{{arrayElem_name}}");
+    xmlNodeSetContent(newNode,"");
+{% endif %}
+
+    while(target != NULL){
+{% set element_dataType = element.attrib['dataType'] %}
+{% set element_name = arrayElem_name %}
+{% set element_variable = 'target->data' %}
+{% set xml_node = 'newNode' %}
+
+{% if element_type == 'multiple' %}
+{# Multiple : Create a new node, Set contents and attach to parent #}
+        xmlNodePtr newNode = xmlNewNode(NULL, "{{arrayElem_name}}");
+        xmlNodeSetContent(newNode,"");
+{% set xml_operation = 'Set' %}
+{% elif element_type == 'csv' %}
+{# CSV: Append content to node, add ';' separator #}
+{% set xml_operation = 'Add' %}
+{% endif %}
+
+{% include 'templates/parameter_serialization_single.c.ji2' %}
+
+{% if element_type == 'multiple' %}
+        xmlAddChild(parent, newNode); 
+{% elif element_type == 'csv' %}
+        xmlNodeAddContent(newNode,";");
+{% endif %}
+        target = target->next;
+    }
+
+{% if element_type == 'csv' %}
+{# Add Node to parent after all serialization has occured #}
+    xmlAddChild(parent, newNode);
+{% endif %}
+}
+{% endif %}

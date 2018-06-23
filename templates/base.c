@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "op_dynamic.h"
+#include "{{prefix}}_dynamic.h"
 #include <libxml2/libxml/xmlmemory.h>
 #include <libxml2/libxml/parser.h>
 

@@ -1,0 +1,60 @@
+{% for element in child %}
+{% set element_name = element.attrib['name'] %}
+{% set element_type = element.attrib['type'] %}
+{% set element_dataType = element.attrib['dataType'] %}
+{% if element.tag == 'struct' %}
+{% set parent = child %}
+{% set child = element %}
+{% include 'templates/struct_definitions_.ji2' %}
+{% endif %}
+{% endfor %}
+
+{% set child_name = child.attrib['name'] %}
+/* {{child_name}} type dependencies */
+{% for element in child %}
+{% set element_name = element.attrib['name'] %}
+{% set element_type = element.attrib['type'] %}
+{% set element_dataType = element.attrib['dataType'] %}
+{% if element.tag == 'param' %}
+{% if element_type in ['csv','multiple'] %}    
+{% set arrayElem_name = element.text %}
+{% set arrayElem_dataType = element_dataType %}
+{% include 'templates/dynamic_array_types.c.ji2' %}
+{% endif %}
+{% endif %}
+{% endfor %}
+
+/* {{child_name}} type definition */
+struct {{child_name}}_t{
+{% for element in child %}
+{% set element_name = element.attrib['name'] %}
+{% set element_type = element.attrib['type'] %}
+{% set element_dataType = element.attrib['dataType'] %}
+{% if element.tag == 'param' %}
+{% if element_type in  ['csv'] %}
+    {{element.text}}_dynArray_t* {{element.text}};
+{% elif 'length' in element.attrib.keys() %}
+    {{element_dataType}} {{element.text}}[{{element.attrib['length']}}];
+{% else %}
+    {{element_dataType}} {{element.text}};
+{% endif %}
+{% endif %}
+{% if element.tag == 'struct' %}
+{% if  element.attrib['type'] == 'multiple'%}
+    {{element_name}}_dynArray_t* {{element_name}};
+{% else %}
+    {{element_name}}Ptr_t {{element_name}};
+{% endif %}
+{% endif %}
+{% endfor %}
+};
+{% if 'type' in child.attrib.keys() %}
+{% if child.attrib['type'] == 'multiple' %}
+typedef struct {{child_name}}_dynArray_t{
+    struct {{child_name}}_t* data;
+    struct {{child_name}}_dynArray_t *next;
+} {{child_name}}_dynArray_t;
+{% endif %}
+{% endif %}
+/* --- */
+
