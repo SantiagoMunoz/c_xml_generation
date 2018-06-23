@@ -4,7 +4,7 @@
         <param dataType='int'>intNo</param>
         <struct name='subGroup' type='multiple'>
             <param dataType='char' length='32'>aString</param>
-            <param daatType='int'  type='csv'>aCSV</param>
+            <param dataType='int' type='csv'>aCSV</param>
         </struct>
     </struct>
     <param dataType='time_t'>time</param>

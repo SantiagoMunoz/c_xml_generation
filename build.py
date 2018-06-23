@@ -16,14 +16,15 @@ env = Environment(loader=file_loader,trim_blocks=True)
 tree= etree.parse(config_file)
 m_root = tree.getroot()
 m_opname = m_root.tag
+m_prefix = output_prefix
 
 op_dynamic_c = env.get_template('templates/base.c')
-output = op_dynamic_c.render(opname=m_opname,root=m_root)
+output = op_dynamic_c.render(prefix=m_prefix,opname=m_opname,root=m_root)
 filename = '%s.c' % output_prefix
 f = open(filename, 'w')
 f.write(output)
 op_dynamic = env.get_template('templates/base.h')
-output = op_dynamic.render(opname=m_opname,root=m_root)
+output = op_dynamic.render(prefix=m_prefix,opname=m_opname,root=m_root)
 filename = '%s.h' % output_prefix
 f = open(filename, 'w')
 f.write(output)
