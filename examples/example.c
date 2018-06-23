@@ -11,8 +11,6 @@ int main()
     time_t now = time(NULL); 
     sample_struct_set_time(m_sample_struct, &now);
     
-
-
     int i = 0; double d = 32.57;
     group1Ptr_t m_group1 = group1_new();
     group1_set_doubleNo(m_group1, &d);
@@ -29,6 +27,7 @@ int main()
     xmlDocPtr xml_document = xmlNewDoc(NULL);
     xmlDocSetRootElement(xml_document, root_node);
     xmlSaveFile("sample_xml.xml",xml_document);
+    
     xmlFreeDoc(xml_document);
     sample_struct_free(m_sample_struct);
     return 0;
