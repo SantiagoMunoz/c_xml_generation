@@ -4,21 +4,17 @@
 int i;
 for(i=0;i<{{element.attrib['length']}};i++){
 {% endif %}
-
 {% if element_dataType in ['int','uint8_t'] %}
-sprintf(scratchpad, "%d",{{element_variable}}{%if 'length' in element.attrib.keys() %}[i]{% endif %});
+    sprintf(scratchpad, "%d",{{element_variable}}{%if 'length' in element.attrib.keys() %}[i]{% endif %});
 {% elif element_dataType in ['float', 'double'] %}
-sprintf(scratchpad, "%f",{{element_variable}}{%if 'length' in element.attrib.keys() %}[i]{% endif %});
+    sprintf(scratchpad, "%f",{{element_variable}}{%if 'length' in element.attrib.keys() %}[i]{% endif %});
 {% elif element_dataType in ['bool'] %}
-if({{element_variable}}{%if 'length' in element.attrib.keys() %}[i]{% endif %} == false)
-    sprintf(scratchpad,"false");
-else
-    sprintf(scratchpad, "true");
+    sprintf(scratchpad, {{element_variable}}{%if 'length' in element.attrib.keys() %}[i]{% endif %} ? "true" : "false");
 {% elif element_dataType in ['char'] %}
     {% if 'length' in element.attrib.keys() %}
-strcpy(scratchpad,{{element_variable}});
+    strcpy(scratchpad,{{element_variable}});
     {% else %}
-sprintf(scratchpad,"%c",{{element_variable}});
+    sprintf(scratchpad,"%c",{{element_variable}});
     {% endif %}
 {% elif element_dataType == 'time_t'%}
     {
@@ -26,7 +22,7 @@ sprintf(scratchpad,"%c",{{element_variable}});
     strftime(scratchpad,64,"%Y-%jT%H:%M:%S.000Z",localtime(&tmp));
     }
 {% endif %}
-xmlNode{{xml_operation}}Content({{xml_node}},scratchpad);
+    xmlNode{{xml_operation}}Content({{xml_node}},scratchpad);
 
 {% if 'length' in element.attrib.keys() and not (element_dataType in ['char']) %}
 if(i != ({{element.attrib['length']}}-1))
