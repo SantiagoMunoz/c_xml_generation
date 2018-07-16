@@ -4,24 +4,28 @@
 int i;
 for(i=0;i<{{element.attrib['length']}};i++){
 {% endif %}
-{% if element_dataType in ['int','uint8_t'] %}
-    sprintf(scratchpad, "%d",{{element_variable}}{%if 'length' in element.attrib.keys() %}[i]{% endif %});
-{% elif element_dataType in ['float', 'double'] %}
-    sprintf(scratchpad, "%f",{{element_variable}}{%if 'length' in element.attrib.keys() %}[i]{% endif %});
-{% elif element_dataType in ['bool'] %}
-    sprintf(scratchpad, {{element_variable}}{%if 'length' in element.attrib.keys() %}[i]{% endif %} ? "true" : "false");
-{% elif element_dataType in ['char'] %}
-    {% if 'length' in element.attrib.keys() %}
-    strcpy(scratchpad,{{element_variable}});
-    {% else %}
-    sprintf(scratchpad,"%c",{{element_variable}});
+if (var) {
+    {% if element_dataType in ['int','uint8_t'] %}
+        sprintf(scratchpad, "%d",{{element_variable}}{%if 'length' in element.attrib.keys() %}[i]{% endif %});
+    {% elif element_dataType in ['float', 'double'] %}
+        sprintf(scratchpad, "%f",{{element_variable}}{%if 'length' in element.attrib.keys() %}[i]{% endif %});
+    {% elif element_dataType in ['bool'] %}
+        sprintf(scratchpad, {{element_variable}}{%if 'length' in element.attrib.keys() %}[i]{% endif %} ? "true" : "false");
+    {% elif element_dataType in ['char'] %}
+        {% if 'length' in element.attrib.keys() %}
+        strcpy(scratchpad,{{element_variable}});
+        {% else %}
+        sprintf(scratchpad,"%c",{{element_variable}});
+        {% endif %}
+    {% elif element_dataType == 'time_t'%}
+        {
+        time_t tmp = ({{element_variable}}{%if 'length' in element.attrib.keys() %}[i]{% endif %});
+        strftime(scratchpad,64,"%Y-%jT%H:%M:%S.000Z",localtime(&tmp));
+        }
     {% endif %}
-{% elif element_dataType == 'time_t'%}
-    {
-    time_t tmp = ({{element_variable}}{%if 'length' in element.attrib.keys() %}[i]{% endif %});
-    strftime(scratchpad,64,"%Y-%jT%H:%M:%S.000Z",localtime(&tmp));
-    }
-{% endif %}
+} else {
+    bzero(scratchpad, sizeof(scratchpad));
+}
     xmlNode{{xml_operation}}Content({{xml_node}},scratchpad);
 
 {% if 'length' in element.attrib.keys() and not (element_dataType in ['char']) %}
