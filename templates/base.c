@@ -7,6 +7,7 @@
 #include <libxml2/libxml/parser.h>
 
 char scratchpad[64];
+time_t time_tmp;
 
 /* --- TYPE DECLARATIONS --- */
 {% set child = root %}

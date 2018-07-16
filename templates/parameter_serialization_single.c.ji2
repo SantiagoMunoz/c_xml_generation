@@ -18,10 +18,8 @@ if (var) {
         sprintf(scratchpad,"%c",{{element_variable}});
         {% endif %}
     {% elif element_dataType == 'time_t'%}
-        {
-        time_t tmp = ({{element_variable}}{%if 'length' in element.attrib.keys() %}[i]{% endif %});
-        strftime(scratchpad,64,"%Y-%jT%H:%M:%S.000Z",localtime(&tmp));
-        }
+        time_tmp = ({{element_variable}}{%if 'length' in element.attrib.keys() %}[i]{% endif %});
+        strftime(scratchpad, sizeof(scratchpad), "%Y-%jT%H:%M:%S.000Z", localtime(&time_tmp));
     {% endif %}
 } else {
     bzero(scratchpad, sizeof(scratchpad));
