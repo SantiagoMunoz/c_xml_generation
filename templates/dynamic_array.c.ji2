@@ -40,8 +40,8 @@ void free_{{arrayElem_name}}_array({{arrayElem_name}}_dynArray_t *firstElement)
 {%if arrayElem_tag == 'struct' %}
 void {{arrayElem_name}}_build_xml({{arrayElem_name}}_dynArray_t *firstElement,xmlNodePtr parent)
 {
-    {{arrayElem_name}}_dynArray_t *var = firstElement;
-    while(var != NULL){
+    {{arrayElem_name}}_dynArray_t *var;
+    for (var = firstElement; var; var = var->next) {
         xmlNodePtr newNode = xmlNewNode(NULL,"{{arrayElem_name}}");
         xmlNodePtr elementNode;
 {% for node in element  %}
@@ -62,21 +62,20 @@ void {{arrayElem_name}}_build_xml({{arrayElem_name}}_dynArray_t *firstElement,xm
         {{node.text}}_array_build_xml(var->data->{{node.text}},newNode);
 {% endif %}
 {% endfor %}
-        var = var->next;
         xmlAddChild(parent, newNode);
     }
 }
 {% elif arrayElem_tag == 'param' %}
 void {{arrayElem_name}}_array_build_xml({{arrayElem_name}}_dynArray_t *firstElement,xmlNodePtr parent)
 {
-    {{arrayElem_name}}_dynArray_t *var = firstElement;
+    {{arrayElem_name}}_dynArray_t *var;
 
 {% if element_type == 'csv' %}
     xmlNodePtr newNode = xmlNewNode(NULL, "{{arrayElem_name}}");
     xmlNodeSetContent(newNode,"");
 {% endif %}
 
-    while(var != NULL){
+    for (var = firstElement; var; var = var->next) {
 {% set element_dataType = element.attrib['dataType'] %}
 {% set element_name = arrayElem_name %}
 {% set element_variable = 'var->data' %}
