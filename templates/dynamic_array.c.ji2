@@ -98,7 +98,6 @@ void {{arrayElem_name}}_array_build_xml({{arrayElem_name}}_dynArray_t *firstElem
 {% elif element_type == 'csv' %}
         xmlNodeAddContent(newNode,";");
 {% endif %}
-        var = var->next;
     }
 
 {% if element_type == 'csv' %}
