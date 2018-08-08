@@ -107,12 +107,13 @@ void {{parent_name}}_set_{{child_name}}({{parent_name}}Ptr_t var, {{child_name}}
 {% if not (child_type in ['multiple','csv']) %}
 void {{child_name}}_build_xml({{child_name}}Ptr_t var, xmlNodePtr parent)
 {
+	if(!var)
+		return;
     xmlNodePtr newNode = xmlNewNode(NULL,"{{child_name}}");
     xmlNodePtr elementNode;
-
 {% for element in child %}
 {% if element.tag == 'struct' %}
-    {{element.attrib['name']}}_build_xml(var ? var->{{element.attrib['name']}} : NULL, newNode);
+    {{element.attrib['name']}}_build_xml(var->{{element.attrib['name']}}, newNode);
 {% elif (element.tag == 'param') and not ('type' in element.attrib.keys())  %}
 {% set element_dataType = element.attrib['dataType'] %}
 {% set element_name =  element.text %}

@@ -35,11 +35,14 @@ void free_{{arrayElem_name}}_array({{arrayElem_name}}_dynArray_t *firstElement)
     {{arrayElem_name}}_free(firstElement->data);
 {% endif %}
     free(firstElement);
+    firstElement = NULL;
     return;
 }
 {%if arrayElem_tag == 'struct' %}
 void {{arrayElem_name}}_build_xml({{arrayElem_name}}_dynArray_t *firstElement,xmlNodePtr parent)
 {
+	if(!firstElement)
+		return;
     {{arrayElem_name}}_dynArray_t *var;
     for (var = firstElement; var; var = var->next) {
         xmlNodePtr newNode = xmlNewNode(NULL,"{{arrayElem_name}}");
